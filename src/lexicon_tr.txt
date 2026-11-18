@@ -1,0 +1,49 @@
+# Kural tabanlı baseline için Türkçe hakaret/küfür kökleri.
+# Elle hazırlandı; her satırda bir kök. "#" sonrası açıklamadır.
+# Kısa kökler (<= 3 harf) yalnızca birebir eşleşir, uzunlar ek almış halleriyle ve
+# küçük yazım hatalarıyla da eşleşir (bkz. src/lexicon.py).
+amk
+aq
+amq
+mk
+oç
+sik
+siktir
+sikerim
+sikim
+sikik
+amına
+amcık
+yarrak
+yarak
+orospu
+piç
+pezevenk
+kahpe
+kaltak
+sürtük
+yavşak
+şerefsiz
+namussuz
+haysiyetsiz
+ibne
+puşt
+göt
+götveren
+gavat
+dangalak
+gerizekalı
+salak
+aptal
+ahmak
+mal
+beyinsiz
+embesil
+hıyar
+it
+lavuk
+ezik
+soysuz
+adi
+pislik
+çakal

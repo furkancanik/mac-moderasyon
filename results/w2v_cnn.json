@@ -1,0 +1,121 @@
+{
+  "model": "w2v_cnn",
+  "hardware": "Apple M4, Darwin 25.6.0, CPU",
+  "macro_f1": 0.7271,
+  "accuracy": 0.8376,
+  "offensive_precision": 0.6261,
+  "offensive_recall": 0.4958,
+  "offensive_f1": 0.5534,
+  "confusion_matrix [[TN,FP],[FN,TP]]": [
+    [
+      2600,
+      212
+    ],
+    [
+      361,
+      355
+    ]
+  ],
+  "latency_ms_mean": 0.114,
+  "latency_ms_p95": 0.139,
+  "latency_runs": 200,
+  "size_mb": 12.637,
+  "vocab_size": 30328,
+  "best_dev_macro_f1": 0.7001,
+  "train_device": "mps",
+  "train_seconds": 44.1,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.1223,
+      "dev_macro_f1": 0.4473
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.1098,
+      "dev_macro_f1": 0.6399
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.0281,
+      "dev_macro_f1": 0.6537
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.9708,
+      "dev_macro_f1": 0.668
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.9467,
+      "dev_macro_f1": 0.604
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.9328,
+      "dev_macro_f1": 0.6677
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.9136,
+      "dev_macro_f1": 0.6846
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.9101,
+      "dev_macro_f1": 0.6765
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.8851,
+      "dev_macro_f1": 0.6831
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.8762,
+      "dev_macro_f1": 0.7001
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.86,
+      "dev_macro_f1": 0.699
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.8423,
+      "dev_macro_f1": 0.6821
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.8334,
+      "dev_macro_f1": 0.6976
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.8169,
+      "dev_macro_f1": 0.6955
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.7957,
+      "dev_macro_f1": 0.694
+    }
+  ],
+  "test_size": 3528,
+  "errors": {
+    "false_positives": [
+      "\"İnsaf ile hakikate şahitlik yaparak Allah'a bağlılığınızda sıkı durun ve herhangi bir kimseye karşı nefretiniz, sizi adaletten sapma günahına itmesin.\" (Maide 5/8)",
+      "@USER Oyumu Recep Tayyip Erdoğan 'a verdim, operasyondan onun haberi olduğuna inanmıyorum dediğini hepimiz duyduk, hiç sıkıntı yapma sen adres belli 🤣",
+      "@USER @USER Fransa’da veya Avrupa’nın diğer bir ülkesinde, bir meclis başkanının çıkıp, “kadının sesli gülmesi, ahlaksızlıktır” diyebildiğini duydunuz mu? Veya Diyanet İşleri’nin kadını dövebilirsiniz, erkek kız çocuğuna karşı şevhet duyabilir dediğine şahit oldunuz mu?",
+      "@USER @USER @USER İşine geldimi yapancı kaynaklara bakın gelmedimi onlar gavur yalan yazar ii salıyon zurnanın son deli ahmey",
+      "Galatasaray maçında penaltı verilmedi her fener maçında şenol güneş bordo mavi giyiniyor biz o yüzden şampiyon olamıyos bırak bu işleride bi git artık yaw"
+    ],
+    "false_negatives": [
+      "@USER @USER Burada atıp tutacağına o kötü koşullarda 3 kuruşa sen çalışsana yiyorsa.",
+      "@USER İşte o onur dediğin sende yok sorun o işte",
+      "bazıları da var görüp cevap vermiyor,  bizim kangal mı daha insan yoksa onlar mı? 🤔",
+      "TRUMP ne demiş    Suriyeden kısa zaman içinde çıkacağız    #ProjeTerörÖrgütleri ne verdiğin sil da alıp DEFOL TRUMP",
+      "Cok basit bir numaraydı bu, beni mi hafife aldın yoksa zekan mı elvermedi"
+    ]
+  }
+}

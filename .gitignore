@@ -1,0 +1,14 @@
+# Veri ve model dosyaları repoya girmez (R7)
+data/
+models/
+*.bin
+*.pt
+*.onnx
+*.safetensors
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/

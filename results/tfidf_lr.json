@@ -1,0 +1,43 @@
+{
+  "model": "tfidf_lr",
+  "hardware": "Apple M4, Darwin 25.6.0, CPU",
+  "macro_f1": 0.7621,
+  "accuracy": 0.8382,
+  "offensive_precision": 0.5887,
+  "offensive_recall": 0.6718,
+  "offensive_f1": 0.6275,
+  "confusion_matrix [[TN,FP],[FN,TP]]": [
+    [
+      2476,
+      336
+    ],
+    [
+      235,
+      481
+    ]
+  ],
+  "latency_ms_mean": 0.51,
+  "latency_ms_p95": 0.659,
+  "latency_runs": 200,
+  "size_mb": 5.659,
+  "best_C": 1.0,
+  "dev_macro_f1": 0.7373,
+  "train_seconds": 2.9,
+  "test_size": 3528,
+  "errors": {
+    "false_positives": [
+      "@USER @USER Siwjsiqjakqjqoqj adamın profiline bak zaten herşeyi Quaresmayla ilgili",
+      "\"İnsaf ile hakikate şahitlik yaparak Allah'a bağlılığınızda sıkı durun ve herhangi bir kimseye karşı nefretiniz, sizi adaletten sapma günahına itmesin.\" (Maide 5/8)",
+      "@USER Oyumu Recep Tayyip Erdoğan 'a verdim, operasyondan onun haberi olduğuna inanmıyorum dediğini hepimiz duyduk, hiç sıkıntı yapma sen adres belli 🤣",
+      "@USER @USER @USER @USER @USER @USER @USER @USER Eleştiriye tahammül edemeyen insanlarla tartışmam. Siz böyle dediniz emriniz başüstüne deyip beynime mi hükmedeceksiniz? Fikirlerim mi değişecek? Kaldı ki gidin de bir seçmenle konuşun bir zahmet! Nasıl oy kaybettiğimizi görürsünüz.",
+      "@USER Ağzında yara var, boğazında yara var, dış etlerin hassas, elini ısırıp kanatıyorsun.. Yani o kan kesin ağzında var"
+    ],
+    "false_negatives": [
+      "@USER @USER Burada atıp tutacağına o kötü koşullarda 3 kuruşa sen çalışsana yiyorsa.",
+      "Sizin yapmacık ilişkilerinizi gördükçe yalnızlığımla gurur duyuyorm 😎Canım kendim🖤     Günaydınnnnnn 😇",
+      "Cok basit bir numaraydı bu, beni mi hafife aldın yoksa zekan mı elvermedi",
+      "@USER İmparator büyük takımlar dedi zaten lig 4 uncusunden bahsetmedi ki",
+      "@USER @USER @USER Mustafa Kemal ile sorunu olan akıl yoksunu insanlar ile tartışmıyorum,beni kendi halime bırakabilirsin."
+    ]
+  }
+}

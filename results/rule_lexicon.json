@@ -1,0 +1,40 @@
+{
+  "model": "rule_lexicon",
+  "hardware": "Apple M4, Darwin 25.6.0, CPU",
+  "macro_f1": 0.6708,
+  "accuracy": 0.8421,
+  "offensive_precision": 0.7978,
+  "offensive_recall": 0.2975,
+  "offensive_f1": 0.4334,
+  "confusion_matrix [[TN,FP],[FN,TP]]": [
+    [
+      2758,
+      54
+    ],
+    [
+      503,
+      213
+    ]
+  ],
+  "latency_ms_mean": 0.018,
+  "latency_ms_p95": 0.041,
+  "latency_runs": 200,
+  "size_mb": 0.001,
+  "test_size": 3528,
+  "errors": {
+    "false_positives": [
+      "@USER Ne gereksiz şeylere takılıyorsunuz.Amaç üzüm yemek değil bağcıyı dövmek.",
+      "Çok bir şey istemiyorum şu hayatta; bir sevgili mesela, çalışabilir durumda bir beyini olsun  Kendini vazgeçilmez görmesin yeter.",
+      "Şeref ekmek bulamazken şerefsiz bulur",
+      "@USER @USER @USER saat 4 5 te banka kapanıyor ,krediyi alıp ankadan istanbula geçicem sabahına araba satışı yapıcaz. Bunlara kalsak hepsi yatmıştı. Allahtan başka bankadan 10 dakikda hallettik işimizi. Çok büyük pişmanlık i.",
+      "-en güzel kız bile kısa olduğuna yakınır   - ya da yakışıklı erkek sıkayım diye söylenir   -zeki fiziğini beğenmez   -imam inancını sorgular   -asker cesaretinden süphe eder    -eğer cehennem varsa  böyle birşey olmalı sürekli eksikliklerimizle yüzleştiğimiz bir sonsuzluktur"
+    ],
+    "false_negatives": [
+      "@USER @USER Burada atıp tutacağına o kötü koşullarda 3 kuruşa sen çalışsana yiyorsa.",
+      "@USER İşte o onur dediğin sende yok sorun o işte",
+      "Sizin yapmacık ilişkilerinizi gördükçe yalnızlığımla gurur duyuyorm 😎Canım kendim🖤     Günaydınnnnnn 😇",
+      "bazıları da var görüp cevap vermiyor,  bizim kangal mı daha insan yoksa onlar mı? 🤔",
+      "TRUMP ne demiş    Suriyeden kısa zaman içinde çıkacağız    #ProjeTerörÖrgütleri ne verdiğin sil da alıp DEFOL TRUMP"
+    ]
+  }
+}

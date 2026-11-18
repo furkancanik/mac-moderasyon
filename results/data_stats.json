@@ -1,0 +1,27 @@
+{
+  "source": "https://huggingface.co/datasets/stefan-it/offenseval2020_tr",
+  "splits": {
+    "train": {
+      "total": 30000,
+      "clean_NOT": 24204,
+      "offensive_OFF": 5796,
+      "offensive_ratio": 0.1932,
+      "avg_words": 15.5
+    },
+    "dev": {
+      "total": 1756,
+      "clean_NOT": 1421,
+      "offensive_OFF": 335,
+      "offensive_ratio": 0.1908,
+      "avg_words": 15.4
+    },
+    "test": {
+      "total": 3528,
+      "clean_NOT": 2812,
+      "offensive_OFF": 716,
+      "offensive_ratio": 0.2029,
+      "avg_words": 15.8
+    }
+  },
+  "train_test_exact_overlap": 1
+}

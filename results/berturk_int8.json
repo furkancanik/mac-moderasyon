@@ -1,0 +1,44 @@
+{
+  "model": "berturk_int8",
+  "hardware": "Apple M4, Darwin 25.6.0, CPU",
+  "macro_f1": 0.8069,
+  "accuracy": 0.8699,
+  "offensive_precision": 0.6612,
+  "offensive_recall": 0.736,
+  "offensive_f1": 0.6966,
+  "confusion_matrix [[TN,FP],[FN,TP]]": [
+    [
+      2542,
+      270
+    ],
+    [
+      189,
+      527
+    ]
+  ],
+  "latency_ms_mean": 5.558,
+  "latency_ms_p95": 10.303,
+  "latency_runs": 200,
+  "size_mb": 106.204,
+  "precision": "INT8 (dynamic)",
+  "runtime": "ONNX Runtime (CPU)",
+  "latency_budget_ms": 50.0,
+  "meets_budget": true,
+  "test_size": 3528,
+  "errors": {
+    "false_positives": [
+      "Olm biz cezaevinde bile son ses Aleyna tilki dinledik kimse bizim fanatikliğimizi sorgulamasın.",
+      "Memem olsa sürekli dekolte giyer, her hareketimde de frikik verirdim",
+      "@USER Ağzında yara var, boğazında yara var, dış etlerin hassas, elini ısırıp kanatıyorsun.. Yani o kan kesin ağzında var",
+      "@USER @USER Ağırlığını koyan bir batman lazım",
+      "@USER @USER @USER İşine geldimi yapancı kaynaklara bakın gelmedimi onlar gavur yalan yazar ii salıyon zurnanın son deli ahmey"
+    ],
+    "false_negatives": [
+      "@USER @USER Burada atıp tutacağına o kötü koşullarda 3 kuruşa sen çalışsana yiyorsa.",
+      "@USER İşte o onur dediğin sende yok sorun o işte",
+      "Sizin yapmacık ilişkilerinizi gördükçe yalnızlığımla gurur duyuyorm 😎Canım kendim🖤     Günaydınnnnnn 😇",
+      "bazıları da var görüp cevap vermiyor,  bizim kangal mı daha insan yoksa onlar mı? 🤔",
+      "TRUMP ne demiş    Suriyeden kısa zaman içinde çıkacağız    #ProjeTerörÖrgütleri ne verdiğin sil da alıp DEFOL TRUMP"
+    ]
+  }
+}
