@@ -11,18 +11,16 @@
 """
 import base64
 import html
+from datetime import datetime
 import inspect
 from pathlib import Path
 
 import gradio as gr
-import pandas as pd
 
 from src.models_hub import ensure_models
 from src.predictors import INT8_NAME, MODEL_NAMES, ModelZoo
 
 BUDGET_MS = 50.0
-LOG_COLS = ["#", "Model", "Etiket", "Güven", "Süre (ms)"]
-CMP_COLS = ["Model", "Etiket", "Güven", "Süre (ms)"]
 
 # Maç listesi: resmi yayıncıların YouTube'daki maç özetleri (sadece gömülür).
 MATCHES = [
@@ -74,6 +72,54 @@ CSS = """
 .fs-player iframe { width:100%; aspect-ratio:16/9; border:0; border-radius:12px; background:#000; }
 .fs-fallback { font-size:14px; color:#94a3b8; padding:8px 4px 0; }
 .fs-fallback a { color:#FACC15 !important; font-weight:700; text-decoration:none; margin-left:6px; }
+
+/* ---- VAR odası: moderasyon paneli ---- */
+#fs-models { background:#0f1724; border:1px solid #1e2d45; border-radius:12px; padding:12px 14px; }
+#fs-models .wrap, #fs-models fieldset > div { gap:8px !important; }
+#fs-models label { background:#111b2b !important; border:1px solid #24344f !important; border-radius:999px !important;
+  padding:8px 14px !important; color:#cbd5e1 !important; font-weight:600 !important; }
+#fs-models label.selected, #fs-models label:has(input:checked) { background:#FACC15 !important; border-color:#FACC15 !important;
+  color:#0b1220 !important; }
+.var { background:linear-gradient(180deg,#0c1628 0%,#0a1220 100%); border:1px solid #1e2d45; border-radius:14px;
+  padding:18px 18px 12px; color:#e2e8f0; font-family:'Public Sans', Arial, sans-serif; position:relative; overflow:hidden; }
+.var::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.06;
+  background:repeating-linear-gradient(90deg,#22c55e 0 60px,#16a34a 60px 120px); }
+.var-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; position:relative; }
+.var-badge { font-family:'Saira Condensed', Arial, sans-serif; font-weight:900; font-size:20px; letter-spacing:2px;
+  background:#FACC15; color:#0b1220; padding:2px 10px; border-radius:6px; }
+.var-title { font-family:'Saira Condensed', Arial, sans-serif; font-weight:800; font-size:22px; letter-spacing:1.5px; }
+.var-model { margin-left:auto; font-size:13px; color:#94a3b8; border:1px solid #24344f; border-radius:999px; padding:3px 10px; }
+.var-live { font-size:13px; font-weight:700; color:#ef4444; letter-spacing:1px; }
+.var-live::before { content:"●"; margin-right:5px; animation:varblink 1.4s infinite; }
+@keyframes varblink { 50% { opacity:.25; } }
+.var-score { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; position:relative; }
+.var-tile { background:#0b1220; border:1px solid #1e2d45; border-radius:10px; padding:10px 12px; }
+.var-num { font-family:'Saira Condensed', Arial, sans-serif; font-weight:800; font-size:34px; line-height:1; color:#FACC15;
+  font-variant-numeric:tabular-nums; }
+.var-num small { font-size:16px; color:#cbd5e1; margin-left:3px; }
+.var-lbl { font-size:11px; letter-spacing:1.5px; color:#94a3b8; text-transform:uppercase; margin-top:6px; }
+.var-sub { font-family:'Saira Condensed', Arial, sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px;
+  color:#94a3b8; text-transform:uppercase; margin:2px 0 8px; position:relative; }
+.var-log { max-height:230px; overflow-y:auto; position:relative; }
+.var-row { display:grid; grid-template-columns:70px 108px 1fr 62px 150px; align-items:center; gap:10px;
+  padding:8px 4px; border-top:1px solid #16233a; font-size:14px; }
+.var-row.h { color:#64748b; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; border-top:0; padding-top:0; }
+.var-time { color:#94a3b8; font-variant-numeric:tabular-nums; }
+.var-card { display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:12px; letter-spacing:.5px; }
+.var-card i { width:11px; height:15px; border-radius:2px; display:inline-block; }
+.var-card.ok i { background:#22c55e; } .var-card.ok { color:#4ade80; }
+.var-card.red i { background:#ef4444; transform:rotate(8deg); } .var-card.red { color:#f87171; }
+.var-who { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.var-p { font-variant-numeric:tabular-nums; color:#cbd5e1; text-align:right; }
+.var-bar { display:flex; align-items:center; gap:8px; }
+.var-bar span { flex:1; height:8px; background:#16233a; border-radius:99px; overflow:hidden; }
+.var-bar b { display:block; height:100%; background:linear-gradient(90deg,#22c55e,#FACC15); border-radius:99px; }
+.var-bar.over b { background:#ef4444; }
+.var-bar em { font-style:normal; font-variant-numeric:tabular-nums; color:#e2e8f0; min-width:56px; text-align:right; }
+.var-empty { color:#64748b; font-size:14px; padding:14px 4px; text-align:center; }
+.var-cmp { width:100%; border-collapse:collapse; font-size:14px; }
+.var-cmp td, .var-cmp th { padding:8px 6px; border-top:1px solid #16233a; text-align:left; }
+.var-cmp th { color:#64748b; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; border-top:0; }
 """
 
 
@@ -129,30 +175,70 @@ print("Hazır.")
 SHORT = {MODEL_NAMES[0]: "BERTurk INT8 (ONNX)", MODEL_NAMES[1]: "BERTurk FP32",
          MODEL_NAMES[2]: "word2vec + CNN", MODEL_NAMES[3]: "tf-idf + LR",
          MODEL_NAMES[4]: "Kural (liste)"}
+RUNTIME = {MODEL_NAMES[0]: "ONNX Runtime · INT8 · CPU", MODEL_NAMES[1]: "PyTorch · FP32 · CPU",
+           MODEL_NAMES[2]: "PyTorch · FP32 · CPU", MODEL_NAMES[3]: "scikit-learn · CPU",
+           MODEL_NAMES[4]: "Kural · CPU"}
 
 
 def _label(p) -> str:
     return "🚫 hakaret" if p.label else "✅ temiz"
 
 
-def _stats(rows) -> str:
+def _card(label: int) -> str:
+    return ('<span class="var-card red"><i></i>HAKARET</span>' if label
+            else '<span class="var-card ok"><i></i>TEMİZ</span>')
+
+
+def _bar(ms: float) -> str:
+    pct = min(100.0, 100.0 * ms / BUDGET_MS)
+    over = " over" if ms > BUDGET_MS else ""
+    return (f'<div class="var-bar{over}"><span><b style="width:{pct:.1f}%"></b></span>'
+            f'<em>{ms:.1f} ms</em></div>')
+
+
+def _console(rows, model_name) -> str:
+    """VAR odası: skor tabelası + her mesajın kaydı (yanıt süresi, 50 ms bütçeye göre çubuk)."""
+    n = len(rows)
+    flagged = sum(r["label"] for r in rows)
+    avg = sum(r["ms"] for r in rows) / n if n else 0.0
+    ok = sum(1 for r in rows if r["ms"] <= BUDGET_MS)
+    head = ('<div class="var-head"><span class="var-badge">VAR</span>'
+            '<span class="var-title">MODERASYON ODASI</span>'
+            f'<span class="var-model">{html.escape(SHORT[model_name])} · {RUNTIME[model_name]}</span>'
+            '<span class="var-live">CANLI</span></div>')
+    score = ('<div class="var-score">'
+             f'<div class="var-tile"><div class="var-num">{n:03d}</div><div class="var-lbl">Mesaj</div></div>'
+             f'<div class="var-tile"><div class="var-num">{flagged:03d}</div><div class="var-lbl">Kırmızı kart</div></div>'
+             f'<div class="var-tile"><div class="var-num">{avg:.1f}<small>ms</small></div><div class="var-lbl">Ortalama süre</div></div>'
+             f'<div class="var-tile"><div class="var-num">{ok}/{n}</div><div class="var-lbl">Bütçe ≤ {BUDGET_MS:.0f} ms</div></div>'
+             '</div>')
+    sub = f'<div class="var-sub">Maç raporu · her mesaj · dolu çubuk = {BUDGET_MS:.0f} ms</div>'
     if not rows:
-        return f"Henüz mesaj yok. Gecikme bütçesi: **{BUDGET_MS:.0f} ms / mesaj** (CPU)."
-    times = [r[4] for r in rows]
-    last = times[-1]
-    avg = sum(times) / len(times)
-    hidden = sum(1 for r in rows if "hakaret" in r[2])
-    ok = "✅ bütçe içinde" if last <= BUDGET_MS else "❌ bütçe aşıldı"
-    return (f"**Son mesaj:** {last:.2f} ms ({ok})  \n"
-            f"**Ortalama:** {avg:.2f} ms · **Mesaj:** {len(rows)} · **Gizlenen:** {hidden}  \n"
-            f"Bütçe: {BUDGET_MS:.0f} ms / mesaj, CPU")
+        body = '<div class="var-empty">Düdük bekleniyor: henüz mesaj yok.</div>'
+    else:
+        lines = ['<div class="var-row h"><span>Saat</span><span>Karar</span><span>Kim · model</span>'
+                 '<span style="text-align:right">P(hak.)</span><span>Süre</span></div>']
+        for r in reversed(rows):
+            lines.append(f'<div class="var-row"><span class="var-time">{r["time"]}</span>{_card(r["label"])}'
+                         f'<span class="var-who">{html.escape(r["user"])} · {html.escape(r["model"])}</span>'
+                         f'<span class="var-p">{r["prob"]:.2f}</span>{_bar(r["ms"])}</div>')
+        body = "".join(lines)
+    return f'<div class="var">{head}{score}{sub}<div class="var-log">{body}</div></div>'
+
+
+def _compare(preds) -> str:
+    if not preds:
+        return '<div class="var"><div class="var-empty">Mesaj gönderince beş modelin kararı burada görünür.</div></div>'
+    rows = "".join(f'<tr><td>{html.escape(SHORT[q.model])}</td><td>{_card(q.label)}</td>'
+                   f'<td>%{100 * q.confidence:.0f}</td><td>{_bar(q.ms)}</td></tr>' for q in preds)
+    return ('<div class="var"><table class="var-cmp"><tr><th>Model</th><th>Karar</th><th>Güven</th>'
+            f'<th>Süre</th></tr>{rows}</table></div>')
 
 
 def on_send(text, username, model_name, history, rows):
     text = (text or "").strip()
     if not text:
-        return history, rows, pd.DataFrame(rows, columns=LOG_COLS), _stats(rows), \
-            gr.update(), ""
+        return history, rows, _console(rows or [], model_name), gr.update(), ""
     username = (username or "taraftar").strip()
     p = zoo.predict(model_name, text)
 
@@ -161,21 +247,19 @@ def on_send(text, username, model_name, history, rows):
     history = list(history or []) + [
         {"role": "user", "content": f"**{html.escape(username)}:** {shown}  \n<sub>{badge}</sub>"}
     ]
-
-    rows = list(rows or []) + [[len(rows or []) + 1, SHORT[model_name],
-                                _label(p), f"%{100 * p.confidence:.0f}", round(p.ms, 2)]]
-
-    cmp = []
-    for name in MODEL_NAMES:
-        q = p if name == model_name else zoo.predict(name, text)
-        cmp.append([SHORT[name], _label(q), f"%{100 * q.confidence:.0f}", round(q.ms, 2)])
-
-    return (history, rows, pd.DataFrame(rows[::-1], columns=LOG_COLS), _stats(rows),
-            pd.DataFrame(cmp, columns=CMP_COLS), "")
+    rows = list(rows or []) + [{"time": datetime.now().strftime("%H:%M:%S"), "user": username,
+                                "model": SHORT[model_name], "label": p.label, "prob": p.prob,
+                                "ms": p.ms}]
+    preds = [p if name == model_name else zoo.predict(name, text) for name in MODEL_NAMES]
+    return history, rows, _console(rows, model_name), _compare(preds), ""
 
 
-def on_clear():
-    return [], [], pd.DataFrame(columns=LOG_COLS), _stats([]), pd.DataFrame(columns=CMP_COLS)
+def on_model(model_name, rows):
+    return _console(rows or [], model_name)
+
+
+def on_clear(model_name):
+    return [], [], _console([], model_name), _compare([])
 
 
 def on_pick(i: int):
@@ -201,19 +285,15 @@ with gr.Blocks(**blocks_kw) as demo:
                 match_btns.append(gr.Button(
                     f"{m['name']}\n{m['league']}",
                     elem_classes=["fs-match", "fs-active"] if i == 0 else ["fs-match"]))
-        # ORTA: yayın + moderasyon paneli
+        # ORTA: yayın + VAR odası (model seçimi + her mesajın yanıt süresi)
         with gr.Column(scale=3):
             now = gr.HTML(_now(0))
             player = gr.HTML(_player(0))
-            with gr.Row():
-                model_dd = gr.Dropdown(MODEL_NAMES, value=INT8_NAME, label="Moderasyon modeli",
-                                       scale=1)
-                stats = gr.Markdown(_stats([]))
-            log = gr.Dataframe(**_kw(gr.Dataframe, value=pd.DataFrame(columns=LOG_COLS),
-                                     label="Yanıt süresi kaydı", interactive=False,
-                                     max_height=240))
-            with gr.Accordion("Son mesaj: beş modelin karşılaştırması", open=False):
-                cmp = gr.Dataframe(pd.DataFrame(columns=CMP_COLS), interactive=False)
+            model_dd = gr.Radio([(SHORT[n], n) for n in MODEL_NAMES], value=INT8_NAME,
+                                label="Moderasyon modeli", elem_id="fs-models")
+            console = gr.HTML(_console([], INT8_NAME))
+            with gr.Accordion("Son mesaj: beş modelin kararı", open=False):
+                cmp = gr.HTML(_compare([]))
         # SAĞ: canlı sohbet
         with gr.Column(scale=2):
             chat = gr.Chatbot(**_kw(gr.Chatbot, label="Canlı sohbet", height=560,
@@ -229,11 +309,12 @@ with gr.Blocks(**blocks_kw) as demo:
     for i, b in enumerate(match_btns):
         b.click(lambda i=i: on_pick(i), None, [player, now, *match_btns])
 
-    outs = [chat, log_state, log, stats, cmp, msg]
+    outs = [chat, log_state, console, cmp, msg]
     ins = [msg, user, model_dd, chat, log_state]
     msg.submit(on_send, ins, outs)
     send.click(on_send, ins, outs)
-    clear.click(on_clear, None, [chat, log_state, log, stats, cmp])
+    model_dd.change(on_model, [model_dd, log_state], console)
+    clear.click(on_clear, model_dd, [chat, log_state, console, cmp])
 
 
 if __name__ == "__main__":
