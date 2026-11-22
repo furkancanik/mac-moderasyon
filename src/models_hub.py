@@ -15,7 +15,7 @@ from src.evaluate import ROOT
 MODELS = ROOT / "models"
 
 # Gün 6'da kendi Hugging Face kullanıcı adınla doldurulacak
-HF_REPO = os.environ.get("MODERASYON_HF_REPO", "KULLANICI_ADI/mac-moderasyon-models")
+HF_REPO = os.environ.get("MODERASYON_HF_REPO", "furkancanik1905/mac-moderasyon-models")
 
 REQUIRED = [
     "tfidf_lr.joblib",
@@ -32,7 +32,7 @@ def ensure_models() -> None:
     missing = [p for p in REQUIRED if not (MODELS / p).exists()]
     if not missing:
         return
-    if HF_REPO.startswith("KULLANICI_ADI"):
+    if HF_REPO.startswith("furkancanik1905"):
         sys.exit(f"Eksik model dosyaları: {missing}\n"
                  "Modelleri eğit (README 5-7. adımlar) ya da src/models_hub.py içindeki "
                  "HF_REPO değerini ayarla.")
