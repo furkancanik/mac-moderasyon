@@ -147,14 +147,10 @@ def _player(i: int) -> str:
     # gömülü oynatmaya izin vermiyor.
     src = (f"https://www.youtube.com/embed/{vid}"
            f"?autoplay=1&mute=1&loop=1&playlist={vid}&rel=0&playsinline=1")
-    watch = f"https://www.youtube.com/watch?v={vid}"
     return (f'<div class="fs-player"><iframe src="{src}" '
             f'referrerpolicy="strict-origin-when-cross-origin" '
             f'allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen '
-            f'title="{html.escape(MATCHES[i]["name"])}"></iframe>'
-            f'<div class="fs-fallback">Video burada açılmıyorsa yayıncı gömülü oynatmaya izin '
-            f'vermiyor demektir. <a href="{watch}" target="_blank" rel="noopener">'
-            f'YouTube’da izle ↗</a></div></div>')
+            f'title="{html.escape(MATCHES[i]["name"])}"></iframe></div>')
 
 
 def _now(i: int) -> str:
@@ -181,10 +177,14 @@ RUNTIME = {MODEL_NAMES[0]: "ONNX Runtime · INT8 · CPU", MODEL_NAMES[1]: "PyTor
 
 
 def _label(p) -> str:
+    if p.by_rule:
+        return "🚫 hakaret (küfür listesi)"
     return "🚫 hakaret" if p.label else "✅ temiz"
 
 
-def _card(label: int) -> str:
+def _card(label: int, by_rule: bool = False) -> str:
+    if by_rule:
+        return '<span class="var-card red"><i></i>LİSTE</span>'
     return ('<span class="var-card red"><i></i>HAKARET</span>' if label
             else '<span class="var-card ok"><i></i>TEMİZ</span>')
 
@@ -219,7 +219,7 @@ def _console(rows, model_name) -> str:
         lines = ['<div class="var-row h"><span>Saat</span><span>Karar</span><span>Kim · model</span>'
                  '<span style="text-align:right">P(hak.)</span><span>Süre</span></div>']
         for r in reversed(rows):
-            lines.append(f'<div class="var-row"><span class="var-time">{r["time"]}</span>{_card(r["label"])}'
+            lines.append(f'<div class="var-row"><span class="var-time">{r["time"]}</span>{_card(r["label"], r.get("rule", False))}'
                          f'<span class="var-who">{html.escape(r["user"])} · {html.escape(r["model"])}</span>'
                          f'<span class="var-p">{r["prob"]:.2f}</span>{_bar(r["ms"])}</div>')
         body = "".join(lines)
@@ -229,7 +229,7 @@ def _console(rows, model_name) -> str:
 def _compare(preds) -> str:
     if not preds:
         return '<div class="var"><div class="var-empty">Mesaj gönderince beş modelin kararı burada görünür.</div></div>'
-    rows = "".join(f'<tr><td>{html.escape(SHORT[q.model])}</td><td>{_card(q.label)}</td>'
+    rows = "".join(f'<tr><td>{html.escape(SHORT[q.model])}</td><td>{_card(q.label, q.by_rule)}</td>'
                    f'<td>%{100 * q.confidence:.0f}</td><td>{_bar(q.ms)}</td></tr>' for q in preds)
     return ('<div class="var"><table class="var-cmp"><tr><th>Model</th><th>Karar</th><th>Güven</th>'
             f'<th>Süre</th></tr>{rows}</table></div>')
@@ -243,13 +243,14 @@ def on_send(text, username, model_name, history, rows):
     p = zoo.predict(model_name, text)
 
     shown = zoo.mask(text) if p.label else html.escape(text)
-    badge = f"{_label(p)} · %{100 * p.confidence:.0f} · {p.ms:.1f} ms"
+    badge = (f"{_label(p)} · {p.ms:.1f} ms" if p.by_rule
+             else f"{_label(p)} · %{100 * p.confidence:.0f} · {p.ms:.1f} ms")
     history = list(history or []) + [
         {"role": "user", "content": f"**{html.escape(username)}:** {shown}  \n<sub>{badge}</sub>"}
     ]
     rows = list(rows or []) + [{"time": datetime.now().strftime("%H:%M:%S"), "user": username,
                                 "model": SHORT[model_name], "label": p.label, "prob": p.prob,
-                                "ms": p.ms}]
+                                "ms": p.ms, "rule": p.by_rule}]
     preds = [p if name == model_name else zoo.predict(name, text) for name in MODEL_NAMES]
     return history, rows, _console(rows, model_name), _compare(preds), ""
 

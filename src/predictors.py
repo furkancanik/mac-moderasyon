@@ -29,9 +29,12 @@ class Prediction:
     label: int          # 1 = hakaret
     prob: float         # hakaret olasılığı
     ms: float           # bu mesaj için geçen süre
+    by_rule: bool = False  # model "temiz" dedi ama küfür listesi eşleşti
 
     @property
     def confidence(self) -> float:
+        if self.by_rule:
+            return 1.0
         return self.prob if self.label else 1 - self.prob
 
 
@@ -80,12 +83,22 @@ class ModelZoo:
             print(f"  yüklendi: {name} ({time.perf_counter() - t0:.1f} sn)")
         return self._cache[name]
 
-    def predict(self, name: str, text: str) -> Prediction:
+    def predict(self, name: str, text: str, guard: bool = True) -> Prediction:
+        """Modelin kararı + küfür listesi kontrolü (guard).
+
+        BERTurk gibi modeller "s4l4k" gibi rakamlı yazımları eğitimde neredeyse hiç görmedi.
+        Model "temiz" dese bile, normalize edilmiş mesaj listedeki bir küfürle eşleşirse
+        mesaj hakaret sayılır (by_rule=True). Sonuç tablosundaki ölçümler guard'sız
+        modellere aittir; guard yalnızca uygulamada son işleme adımı olarak çalışır.
+        """
         model = self.get(name)
         t0 = time.perf_counter()
-        p = model.predict_proba(text)
+        p = float(model.predict_proba(text))
+        label, by_rule = int(p >= 0.5), False
+        if guard and not label and self.matcher.find(text):
+            label, by_rule = 1, True
         ms = (time.perf_counter() - t0) * 1000
-        return Prediction(name, int(p >= 0.5), float(p), ms)
+        return Prediction(name, label, p, ms, by_rule)
 
     def mask(self, text: str) -> str:
         """Hakaret sayılan mesajda listedeki kelimeleri yıldızlar;
