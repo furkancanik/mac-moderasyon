@@ -1,11 +1,13 @@
-"""Maç Sohbeti Moderasyonu: Gradio uygulaması (R1, R5).
+"""FurkanSports · Maç Sohbeti Moderasyonu: Gradio uygulaması (R1, R5).
 
 Çalıştır:  python app.py   ->  tarayıcıda http://127.0.0.1:7860
 
-- Sohbet ekranı: her mesaj anında temiz / hakaret olarak etiketlenir, güven yüzdesi gösterilir,
-  hakaret içeren mesajlar maskelenir.
-- Yan panel: seçili model (varsayılan: BERTurk INT8, ONNX Runtime, CPU), her mesajın yanıt
-  süresi, 50 ms bütçe kontrolü ve son mesaj için beş modelin yan yana tahmini.
+- Solda maç listesi: bir maça tıklanınca resmi yayıncının YouTube özeti ortada oynar
+  (video YouTube'dan gömülür, indirilmez).
+- Sağda canlı sohbet: her mesaj anında temiz / hakaret olarak etiketlenir, güven yüzdesi
+  gösterilir, hakaret içeren mesajlar maskelenir.
+- Videonun altında moderasyon paneli: seçili model (varsayılan: BERTurk INT8, ONNX Runtime,
+  CPU), her mesajın yanıt süresi, 50 ms bütçe kontrolü ve beş modelin karşılaştırması.
 """
 import html
 import inspect
@@ -20,14 +22,81 @@ BUDGET_MS = 50.0
 LOG_COLS = ["#", "Model", "Etiket", "Güven", "Süre (ms)"]
 CMP_COLS = ["Model", "Etiket", "Güven", "Süre (ms)"]
 
-EXAMPLES = [
-    "gg güzel maçtı, ikinci yarı çok iyi oynadık",
-    "hakem bugün resmen maçı kaçırdı ya",
-    "s1kt1r git hakem",
-    "bu kadar beceriksiz bir kaleci görmedim, git başka iş yap",
-    "salaaaaak mısın sen ne yazıyorsun",
-    "Galatasaray - Fenerbahçe derbisi saat kaçta?",
+# Maç listesi: resmi yayıncıların YouTube'daki maç özetleri (sadece gömülür).
+MATCHES = [
+    {"name": "Galatasaray - Fenerbahçe", "league": "Süper Lig · 9. Hafta", "yt": "gpWucIHPMEw",
+     "channel": "beIN SPORTS Türkiye"},
+    {"name": "Galatasaray - Liverpool", "league": "Şampiyonlar Ligi · 2. Hafta", "yt": "vX2xzCdRVss",
+     "channel": "TRT SPOR"},
+    {"name": "Aston Villa - Fenerbahçe", "league": "Şampiyonlar Ligi · 2. Hafta", "yt": "-f2_WWUMAdc",
+     "channel": "TRT SPOR"},
+    {"name": "Lille - Galatasaray", "league": "Şampiyonlar Ligi · 3. Hafta", "yt": "trSabcA4How",
+     "channel": "TRT SPOR"},
+    {"name": "Fenerbahçe - Beşiktaş", "league": "Süper Lig · 4. Hafta", "yt": "H0BfItmwz7k",
+     "channel": "beIN SPORTS Türkiye"},
 ]
+
+CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800;900&display=swap');
+.gradio-container { max-width: 100% !important; }
+#fs-header { display:flex; align-items:center; gap:24px; padding:6px 4px 14px;
+  border-bottom:1px solid #1f2a3a; margin-bottom:6px; }
+.fs-logo { font-family:'Saira Condensed', Arial, sans-serif; font-weight:900; font-style:italic;
+  font-size:52px; line-height:1; letter-spacing:0.5px; text-transform:uppercase;
+  transform:skewX(-8deg); color:#ffffff; position:relative; padding-bottom:6px; }
+.fs-logo span { color:#FACC15; }
+.fs-logo::after { content:""; position:absolute; left:46%; right:-6px; bottom:0; height:5px;
+  background:#FACC15; border-radius:4px; transform:skewX(-20deg); }
+.fs-tag { font-family:'Saira Condensed', Arial, sans-serif; font-weight:600; font-size:20px;
+  letter-spacing:2px; color:#94a3b8; text-transform:uppercase; }
+#fs-sidebar { background:#0f1724; border-radius:12px; padding:0 0 8px; }
+.fs-tab { font-family:'Saira Condensed', Arial, sans-serif; font-weight:800; font-size:20px;
+  letter-spacing:2px; color:#FACC15; padding:14px 18px 10px; border-bottom:3px solid #FACC15;
+  text-transform:uppercase; }
+.fs-match button { justify-content:flex-start !important; text-align:left !important;
+  background:#111b2b !important; color:#e2e8f0 !important; border:0 !important;
+  border-left:4px solid transparent !important; border-radius:0 !important;
+  font-weight:700 !important; font-size:16px !important; padding:16px 14px !important;
+  white-space:pre-line !important; line-height:1.35 !important; }
+.fs-match button:hover { background:#16233a !important; }
+.fs-match.fs-active button { background:#13261c !important; border-left-color:#22c55e !important; }
+#fs-now { background:#0f1724; border-radius:10px; padding:10px 16px; color:#cbd5e1; font-size:16px; }
+#fs-now b { color:#ffffff; }
+.fs-dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444;
+  margin-right:10px; vertical-align:middle; }
+.fs-player iframe { width:100%; aspect-ratio:16/9; border:0; border-radius:12px; background:#000; }
+.fs-fallback { font-size:14px; color:#94a3b8; padding:8px 4px 0; }
+.fs-fallback a { color:#FACC15 !important; font-weight:700; text-decoration:none; margin-left:6px; }
+"""
+
+
+def _kw(component, **kwargs):
+    """Gradio sürümünün desteklemediği parametreleri sessizce atlar."""
+    params = inspect.signature(component).parameters
+    return {k: v for k, v in kwargs.items() if k in params}
+
+
+def _player(i: int) -> str:
+    vid = MATCHES[i]["yt"]
+    # Standart YouTube gömme adresi + referrer: bazı kanallar, oynatıldığı sayfayı görmeden
+    # gömülü oynatmaya izin vermiyor.
+    src = (f"https://www.youtube.com/embed/{vid}"
+           f"?autoplay=1&mute=1&loop=1&playlist={vid}&rel=0&playsinline=1")
+    watch = f"https://www.youtube.com/watch?v={vid}"
+    return (f'<div class="fs-player"><iframe src="{src}" '
+            f'referrerpolicy="strict-origin-when-cross-origin" '
+            f'allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen '
+            f'title="{html.escape(MATCHES[i]["name"])}"></iframe>'
+            f'<div class="fs-fallback">Video burada açılmıyorsa yayıncı gömülü oynatmaya izin '
+            f'vermiyor demektir. <a href="{watch}" target="_blank" rel="noopener">'
+            f'YouTube’da izle ↗</a></div></div>')
+
+
+def _now(i: int) -> str:
+    m = MATCHES[i]
+    return (f'<div id="fs-now"><span class="fs-dot"></span>Şu anda <b>{html.escape(m["name"])}</b>'
+            f' izleniyor · {html.escape(m["league"])} · özet: {html.escape(m["channel"])}</div>')
+
 
 ensure_models()
 print("Modeller yükleniyor...")
@@ -90,34 +159,56 @@ def on_clear():
     return [], [], pd.DataFrame(columns=LOG_COLS), _stats([]), pd.DataFrame(columns=CMP_COLS)
 
 
-with gr.Blocks(title="Maç Sohbeti Moderasyonu") as demo:
-    gr.Markdown("# ⚽ Maç Sohbeti Moderasyonu\n"
-                "Canlı maç yayını sohbetindeki mesajlar CPU üzerinde anlık olarak "
-                "**temiz / hakaret** diye etiketlenir; hakaret içeren mesajlar gizlenir.")
+def on_pick(i: int):
+    """Maç listesinden seçim: oynatıcı, 'şu anda' çubuğu ve aktif satır vurgusu güncellenir."""
+    marks = [gr.update(elem_classes=["fs-match", "fs-active"] if j == i else ["fs-match"])
+             for j in range(len(MATCHES))]
+    return [_player(i), _now(i), *marks]
+
+
+blocks_kw = _kw(gr.Blocks, title="FurkanSports · Maç Sohbeti Moderasyonu", css=CSS)
+launch_kw = {} if "css" in blocks_kw else _kw(gr.Blocks.launch, css=CSS)
+
+with gr.Blocks(**blocks_kw) as demo:
+    gr.HTML('<div id="fs-header"><div class="fs-logo">Furkan<span>Sports</span></div>'
+            '<div class="fs-tag">Maç özetleri · Moderasyonlu canlı sohbet</div></div>')
     log_state = gr.State([])
-    with gr.Row():
+    with gr.Row(equal_height=False):
+        # SOL: maç listesi
+        with gr.Column(scale=1, min_width=240, elem_id="fs-sidebar"):
+            gr.HTML('<div class="fs-tab">⚽ Futbol</div>')
+            match_btns = []
+            for i, m in enumerate(MATCHES):
+                match_btns.append(gr.Button(
+                    f"{m['name']}\n{m['league']}",
+                    elem_classes=["fs-match", "fs-active"] if i == 0 else ["fs-match"]))
+        # ORTA: yayın + moderasyon paneli
         with gr.Column(scale=3):
-            chat_kwargs = {"label": "Canlı sohbet", "height": 460}
-            if "group_consecutive_messages" in inspect.signature(gr.Chatbot).parameters:
-                chat_kwargs["group_consecutive_messages"] = False   # her mesaj ayrı balon
-            chat = gr.Chatbot(**chat_kwargs)
+            now = gr.HTML(_now(0))
+            player = gr.HTML(_player(0))
+            with gr.Row():
+                model_dd = gr.Dropdown(MODEL_NAMES, value=INT8_NAME, label="Moderasyon modeli",
+                                       scale=1)
+                stats = gr.Markdown(_stats([]))
+            log = gr.Dataframe(**_kw(gr.Dataframe, value=pd.DataFrame(columns=LOG_COLS),
+                                     label="Yanıt süresi kaydı", interactive=False,
+                                     max_height=240))
+            with gr.Accordion("Son mesaj: beş modelin karşılaştırması", open=False):
+                cmp = gr.Dataframe(pd.DataFrame(columns=CMP_COLS), interactive=False)
+        # SAĞ: canlı sohbet
+        with gr.Column(scale=2):
+            chat = gr.Chatbot(**_kw(gr.Chatbot, label="Canlı sohbet", height=560,
+                                    group_consecutive_messages=False))
             with gr.Row():
                 user = gr.Textbox(value="taraftar", label="Kullanıcı adı", scale=1)
                 msg = gr.Textbox(placeholder="Mesajını yaz ve Enter'a bas...", label="Mesaj",
-                                 scale=4, autofocus=True)
+                                 scale=3, autofocus=True)
             with gr.Row():
                 send = gr.Button("Gönder", variant="primary")
                 clear = gr.Button("Sohbeti temizle")
-            gr.Examples(EXAMPLES, inputs=msg, label="Örnek mesajlar")
-        with gr.Column(scale=2):
-            model_dd = gr.Dropdown(MODEL_NAMES, value=INT8_NAME, label="Moderasyon modeli")
-            stats = gr.Markdown(_stats([]))
-            log = gr.Dataframe(pd.DataFrame(columns=LOG_COLS), label="Yanıt süresi kaydı",
-                               interactive=False)
-            cmp = gr.Dataframe(pd.DataFrame(columns=CMP_COLS),
-                               label="Son mesaj: beş modelin karşılaştırması", interactive=False)
-            gr.Markdown("<sub>Veri: OffensEval-TR 2020. Modeller: kural tabanlı, tf-idf + LR, "
-                        "kendi word2vec'imiz + 1D CNN, BERTurk (FP32 ve INT8).</sub>")
+
+    for i, b in enumerate(match_btns):
+        b.click(lambda i=i: on_pick(i), None, [player, now, *match_btns])
 
     outs = [chat, log_state, log, stats, cmp, msg]
     ins = [msg, user, model_dd, chat, log_state]
@@ -127,4 +218,4 @@ with gr.Blocks(title="Maç Sohbeti Moderasyonu") as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(inbrowser=True)
+    demo.launch(inbrowser=True, **launch_kw)
