@@ -1,1 +1,1 @@
-Maç videosunu bu klasöre mac.mp4 adıyla koy. Repoya eklenmez (.gitignore).
+Bu klasör yerel görseller içindir (ör. reklam.png). Görseller repoya eklenmez (.gitignore).

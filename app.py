@@ -9,8 +9,10 @@
 - Videonun altında moderasyon paneli: seçili model (varsayılan: BERTurk INT8, ONNX Runtime,
   CPU), her mesajın yanıt süresi, 50 ms bütçe kontrolü ve beş modelin karşılaştırması.
 """
+import base64
 import html
 import inspect
+from pathlib import Path
 
 import gradio as gr
 import pandas as pd
@@ -47,6 +49,11 @@ CSS = """
 .fs-logo span { color:#FACC15; }
 .fs-logo::after { content:""; position:absolute; left:46%; right:-6px; bottom:0; height:5px;
   background:#FACC15; border-radius:4px; transform:skewX(-20deg); }
+.fs-ad { margin-left:auto; display:flex; align-items:center; gap:18px; }
+.fs-ad img { height:130px; width:auto; object-fit:contain; }
+.fs-ad-text { font-family:'Saira Condensed', Arial, sans-serif; font-weight:800; font-style:normal;
+  font-size:24px; line-height:1.1; color:#e2e8f0; display:flex; flex-direction:column; }
+.fs-ad-text span { font-size:40px; font-weight:900; color:#FACC15; }
 .fs-tag { font-family:'Saira Condensed', Arial, sans-serif; font-weight:600; font-size:20px;
   letter-spacing:2px; color:#94a3b8; text-transform:uppercase; }
 #fs-sidebar { background:#0f1724; border-radius:12px; padding:0 0 8px; }
@@ -68,6 +75,18 @@ CSS = """
 .fs-fallback { font-size:14px; color:#94a3b8; padding:8px 4px 0; }
 .fs-fallback a { color:#FACC15 !important; font-weight:700; text-decoration:none; margin-left:6px; }
 """
+
+
+AD_PATH = Path(__file__).resolve().parent / "assets" / "reklam.png"
+
+
+def _ad_html() -> str:
+    """Sağ üstteki reklam kutusu. Görsel repoya eklenmez; yoksa kutu gösterilmez."""
+    if not AD_PATH.exists():
+        return ""
+    b64 = base64.b64encode(AD_PATH.read_bytes()).decode()
+    return ('<div class="fs-ad"><img src="data:image/png;base64,' + b64 + '" alt="2 Big Mac menü">'
+            '<div class="fs-ad-text">2 TANE BIG MAC PARASI YERİNE<span>FURKANSPORTS</span></div></div>')
 
 
 def _kw(component, **kwargs):
@@ -171,7 +190,7 @@ launch_kw = {} if "css" in blocks_kw else _kw(gr.Blocks.launch, css=CSS)
 
 with gr.Blocks(**blocks_kw) as demo:
     gr.HTML('<div id="fs-header"><div class="fs-logo">Furkan<span>Sports</span></div>'
-            '<div class="fs-tag">Maç özetleri · Moderasyonlu canlı sohbet</div></div>')
+            '<div class="fs-tag">Maç özetleri · Moderasyonlu canlı sohbet</div>' + _ad_html() + '</div>')
     log_state = gr.State([])
     with gr.Row(equal_height=False):
         # SOL: maç listesi
