@@ -14,7 +14,7 @@ from src.evaluate import ROOT
 
 MODELS = ROOT / "models"
 
-# Gün 6'da kendi Hugging Face kullanıcı adınla doldurulacak
+# Modellerin bulunduğu Hugging Face reposu (MODERASYON_HF_REPO ortam değişkeniyle değiştirilebilir)
 HF_REPO = os.environ.get("MODERASYON_HF_REPO", "furkancanik1905/mac-moderasyon-models")
 
 REQUIRED = [
@@ -32,10 +32,6 @@ def ensure_models() -> None:
     missing = [p for p in REQUIRED if not (MODELS / p).exists()]
     if not missing:
         return
-    if HF_REPO.startswith("furkancanik1905"):
-        sys.exit(f"Eksik model dosyaları: {missing}\n"
-                 "Modelleri eğit (README 5-7. adımlar) ya da src/models_hub.py içindeki "
-                 "HF_REPO değerini ayarla.")
     from huggingface_hub import snapshot_download
     print(f"Modeller Hugging Face Hub'dan indiriliyor: {HF_REPO}")
     snapshot_download(repo_id=HF_REPO, local_dir=MODELS, allow_patterns=PATTERNS)
